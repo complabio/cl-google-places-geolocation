@@ -9,84 +9,37 @@ import GooglePlacesAutocomplete, {
   geocodeByLatLng,
 } from "react-google-places-autocomplete";
 
-const getUserLocation = () => {
-  console.log("acquiring user location...");
-  console.log(document.featurePolicy.allow);
-  console.log(navigator.geolocation);
-  if (navigator.geolocation) {
-    navigator.permissions
-      .query({ name: "geolocation" })
-      .then(function (result) {
-        if (result.state === "granted") {
-          console.log(result.state);
-          const options = {
-            enableHighAccuracy: true,
-            timeout: 5000,
-            maximumAge: 5,
-          };
-
-          const success = (pos) => {
-            var crd = pos.coords;
-            geocodeByLatLng({
-              lat: crd.latitude,
-              lng: crd.longitude,
-            })
-              .then((results) => console.log(results))
-              .catch((error) => console.error(error));
-          };
-
-          const error = (err) => {
-            console.warn(`ERROR(${err.code}): ${err.message}`);
-          };
-          navigator.geolocation.getCurrentPosition(success, error, options);
-        } else if (result.state === "prompt") {
-          console.log("prompt", result.state);
-        } else if (result.state === "denied") {
-          //If denied then you have to show instructions to enable location
-          console.log("denied");
-          const options = {
-            enableHighAccuracy: true,
-            timeout: 5000,
-            maximumAge: 5,
-          };
-
-          const success = (pos) => {
-            var crd = pos.coords;
-            geocodeByLatLng({
-              lat: crd.latitude,
-              lng: crd.longitude,
-            })
-              .then((results) => console.log(results))
-              .catch((error) => console.error(error));
-          };
-
-          const error = (err) => {
-            console.warn(`ERROR(${err.code}): ${err.message}`);
-          };
-          navigator.geolocation.getCurrentPosition(success, error, options);
-        }
-        result.onchange = function () {
-          console.log(result.state);
-        };
-      });
-  } else {
-    console.log("error po");
-  }
-};
-
 const CLGooglePlaces = (props) => {
   const [value, setValue] = useState(null);
+  const [zip, setZip] = useState(null);
 
   useEffect(() => {
-  
     if (value != undefined) {
+      let zipCode = "";
+
+      // geocodeByLatLng(value.label).then((results) =>
+      //   console.log("bylatlong", results)
+      // );
+
       geocodeByAddress(value.label)
-        .then((results) => getLatLng(results[0]))
+        .then((results) => {
+          // zipCode = results[0].address_components[6].long_name;
+          const postal = results[0].address_components.find((e) => {
+            return e.types.find((i) => i == "postal_code");
+          });
+          zipCode = postal != undefined ? postal.long_name : "";
+          return getLatLng(results[0]);
+        })
         .then(({ lat, lng }) => {
-          // console.log(value)
           const handler = props.action;
           if (handler)
-            handler(lng, lat, value.value.description, value.value.place_id);
+            handler(
+              lng,
+              lat,
+              value.value.description,
+              value.value.place_id,
+              zipCode
+            );
         });
     }
   }, [value]);

@@ -299,6 +299,10 @@
         {
           "type": "text",
           "displayName": "Place ID"
+        },
+        {
+          "type": "text",
+          "displayName": "Zip Code"
         }
       ]
     }
